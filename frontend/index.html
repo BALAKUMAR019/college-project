@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GreenMind - Smart Plant Monitoring</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f8f4;
+            color: #26352b;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ================= SIDEBAR ================= */
+
+        .sidebar {
+            width: 240px;
+            background: #174d35;
+            color: white;
+            padding: 25px 18px;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .logo span {
+            color: #9be36b;
+        }
+
+        .menu {
+            list-style: none;
+        }
+
+        .menu li {
+            margin: 10px 0;
+        }
+
+        .menu a {
+            display: block;
+            text-decoration: none;
+            color: #d9e8de;
+            padding: 13px 15px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            background: #286746;
+            color: white;
+        }
+
+        /* ================= MAIN ================= */
+
+        .main {
+            margin-left: 240px;
+            width: calc(100% - 240px);
+            padding: 30px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .welcome p {
+            color: #718078;
+        }
+
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-icon {
+            width: 42px;
+            height: 42px;
+            background: #dcebdd;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #174d35;
+        }
+
+        /* ================= SENSOR CARDS ================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            color: #758178;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #174d35;
+        }
+
+        .card-small {
+            margin-top: 8px;
+            color: #7b887f;
+            font-size: 13px;
+        }
+
+        .status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #dff4df;
+            color: #28703d;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* ================= CONTENT GRID ================= */
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-card {
+            background: white;
+            padding: 22px;
+            border-radius: 16px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title h2 {
+            font-size: 19px;
+        }
+
+        .live {
+            color: #35a65b;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        /* ================= CHART ================= */
+
+        .chart-container {
+            height: 280px;
+        }
+
+        /* ================= PLANT CARD ================= */
+
+        .plant-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 14px;
+            margin-bottom: 15px;
+        }
+
+        .plant-name {
+            font-size: 21px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .plant-description {
+            color: #718078;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ================= BOTTOM GRID ================= */
+
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+        }
+
+        /* ================= TABLE ================= */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 13px 8px;
+            border-bottom: 1px solid #edf1ed;
+            font-size: 14px;
+        }
+
+        th {
+            color: #77837b;
+            font-weight: normal;
+        }
+
+        td {
+            color: #34443a;
+        }
+
+        /* ================= AI RECOMMENDATION ================= */
+
+        .ai-box {
+            background: #eef8eb;
+            border-left: 5px solid #55a95d;
+            padding: 18px;
+            border-radius: 12px;
+            line-height: 1.6;
+            color: #3b513f;
+            font-size: 14px;
+        }
+
+        .ai-icon {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        /* ================= DONUT ================= */
+
+        .donut-container {
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 1100px) {
+
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid,
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 750px) {
+
+            .sidebar {
+                width: 70px;
+                padding: 20px 8px;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .menu a {
+                font-size: 0;
+                text-align: center;
+            }
+
+            .menu a::first-letter {
+                font-size: 20px;
+            }
+
+            .main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+                padding: 18px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+
+        .page-section.hidden { display:none; }
+        .action-btn{border:0;background:#286746;color:#fff;padding:10px 16px;border-radius:9px;cursor:pointer}
+        .monitor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:20px}
+        .monitor-value{font-size:34px;font-weight:bold;color:#174d35;margin-top:8px}
+        .history-wrap{overflow-x:auto}
+        .setting-row{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #edf1ed}
+        .setting-row input,.setting-row select{padding:10px;border:1px solid #d8e2da;border-radius:8px}
+        @media(max-width:900px){.monitor-grid{grid-template-columns:1fr}.setting-row{flex-direction:column;align-items:flex-start}}
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            🌿 Green<span>Mind</span>
+        </div>
+
+        <ul class="menu">
+            <li><a href="#" class="active nav-link" data-page="dashboard">🏠 Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-page="monitoring">📡 Live Monitoring</a></li>
+            <li><a href="#" class="nav-link" data-page="history">📊 Plant History</a></li>
+            <li><a href="#" class="nav-link" data-page="recommendations">🤖 Recommendations</a></li>
+            <li><a href="#" class="nav-link" data-page="settings">⚙️ Settings</a></li>
+        </ul>
+
+    </aside>
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+
+    <main class="main">
+        <section id="dashboardPage" class="page-section">
+
+        <!-- TOP BAR -->
+
+        <div class="topbar">
+
+            <div class="welcome">
+
+                <h1>Good Morning! 🌱</h1>
+
+                <p>
+                    Monitor your plant health in real time.
+                </p>
+
+            </div>
+
+            <div class="user">
+
+                <div class="user-icon">
+                    U
+                </div>
+
+                <div>
+                    <strong>User</strong>
+                    <br>
+                    <small>Plant Owner</small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= SENSOR CARDS ================= -->
+
+        <div class="cards">
+
+            <!-- Soil Moisture -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    💧 Soil Moisture
+                </div>
+
+                <div class="card-value" id="moisture">
+                    62%
+                </div>
+
+                <div class="card-small">
+                    Current soil condition
+                </div>
+
+            </div>
+
+
+            <!-- Temperature -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    🌡️ Temperature
+                </div>
+
+                <div class="card-value" id="temperature">
+                    24°C
+                </div>
+
+                <div class="card-small">
+                    Current temperature
+                </div>
+
+            </div>
+
+
+            <!-- Humidity -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    💦 Humidity
+                </div>
+
+                <div class="card-value" id="humidity">
+                    68%
+                </div>
+
+                <div class="card-small">
+                    Air humidity
+                </div>
+
+            </div>
+
+
+            <!-- Plant Status -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    🌿 Plant Status
+                </div>
+
+                <div class="card-value" id="plantStatus">
+                    Healthy
+                </div>
+
+                <span class="status">
+                    ● Good Condition
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= LIVE CHART + PLANT ================= -->
+
+        <div class="content-grid">
+
+            <!-- LIVE SENSOR DATA -->
+
+            <div class="section-card">
+
+                <div class="section-title">
+
+                    <h2>
+                        Live Sensor Data
+                    </h2>
+
+                    <span class="live">
+                        ● LIVE
+                    </span>
+
+                </div>
+
+                <div class="chart-container">
+
+                    <canvas id="sensorChart"></canvas>
+
+                </div>
+
+            </div>
+
+
+            <!-- PLANT -->
+
+            <div class="section-card plant-card">
+
+                <div class="section-title">
+
+                    <h2>
+                        My Plant
+                    </h2>
+
+                </div>
+
+                <img
+                    src="https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=800&q=80"
+                    alt="Plant"
+                >
+
+                <div class="plant-name">
+                    Green Plant
+                </div>
+
+                <div class="plant-description">
+                    Your plant is currently being monitored
+                    using IoT sensors and AI.
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= RECENT READINGS + HISTORY ================= -->
+
+        <div class="bottom-grid">
+
+
+            <!-- RECENT READINGS -->
+
+            <div class="section-card">
+
+                <div class="section-title">
+
+                    <h2>
+                        Recent Readings
+                    </h2>
+
+                </div>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Time
+                            </th>
+
+                            <th>
+                                Moisture
+                            </th>
+
+                            <th>
+                                Temperature
+                            </th>
+
+                            <th>
+                                Humidity
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="readingsTable">
+
+                        <tr>
+
+                            <td>
+                                10:30 AM
+                            </td>
+
+                            <td>
+                                62%
+                            </td>
+
+                            <td>
+                                24°C
+                            </td>
+
+                            <td>
+                                68%
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>
+                                10:20 AM
+                            </td>
+
+                            <td>
+                                64%
+                            </td>
+
+                            <td>
+                                24°C
+                            </td>
+
+                            <td>
+                                67%
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td>
+                                10:10 AM
+                            </td>
+
+                            <td>
+                                65%
+                            </td>
+
+                            <td>
+                                23°C
+                            </td>
+
+                            <td>
+                                69%
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- PLANT HISTORY -->
+
+            <div class="section-card">
+
+                <div class="section-title">
+
+                    <h2>
+                        Plant Condition
+                    </h2>
+
+                </div>
+
+                <div class="donut-container">
+
+                    <canvas id="plantChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= AI RECOMMENDATION ================= -->
+
+        <div class="section-card" style="margin-top:20px;">
+
+            <div class="section-title">
+
+                <h2>
+                    🤖 AI Recommendation
+                </h2>
+
+            </div>
+
+            <div class="ai-box">
+
+                <div class="ai-icon">
+                    🌱
+                </div>
+
+                <div id="recommendation">
+
+                    Your plant currently has good soil moisture,
+                    temperature and humidity levels.
+                    Continue monitoring the plant regularly.
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        </section>
+
+        <section id="monitoringPage" class="page-section hidden">
+            <div class="topbar">
+                <div class="welcome"><h1>Live Monitoring 📡</h1><p>Current plant sensor readings.</p></div>
+                <button class="action-btn" onclick="getSensorData()">↻ Refresh Now</button>
+            </div>
+            <div class="monitor-grid">
+                <div class="card"><div class="card-title">💧 Soil Moisture</div><div class="monitor-value" id="mMoisture">--%</div></div>
+                <div class="card"><div class="card-title">🌡️ Temperature</div><div class="monitor-value" id="mTemp">--°C</div></div>
+                <div class="card"><div class="card-title">💦 Humidity</div><div class="monitor-value" id="mHumidity">--%</div></div>
+            </div>
+            <div class="section-card">
+                <div class="section-title"><h2>Plant Status</h2><span class="live">● LIVE</span></div>
+                <div class="ai-box" id="mStatus">Waiting for sensor data...</div>
+            </div>
+        </section>
+
+        <section id="historyPage" class="page-section hidden">
+            <div class="topbar"><div class="welcome"><h1>Plant History 📊</h1><p>Readings collected during this session.</p></div></div>
+            <div class="section-card">
+                <div class="section-title"><h2>Sensor History</h2><span class="live" id="historyCount">0 readings</span></div>
+                <div class="history-wrap">
+                    <table><thead><tr><th>Time</th><th>Moisture</th><th>Temperature</th><th>Humidity</th><th>Status</th></tr></thead>
+                    <tbody id="historyTable"><tr><td colspan="5">No readings yet.</td></tr></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendationsPage" class="page-section hidden">
+            <div class="topbar">
+                <div class="welcome"><h1>AI Recommendations 🤖</h1><p>Care guidance based on current sensor values.</p></div>
+                <button class="action-btn" onclick="getRecommendation()">✨ Generate Again</button>
+            </div>
+            <div class="section-card">
+                <div class="section-title"><h2>AI Recommendation</h2></div>
+                <div class="ai-box"><div class="ai-icon">🌱</div><div id="recommendationPageText">Loading...</div></div>
+            </div>
+        </section>
+
+        <section id="settingsPage" class="page-section hidden">
+            <div class="topbar"><div class="welcome"><h1>Settings ⚙️</h1><p>Customize your GreenMind dashboard.</p></div></div>
+            <div class="section-card">
+                <div class="setting-row"><div><strong>Plant Name</strong><br><small>Displayed on the dashboard</small></div><input id="plantNameInput" value="Green Plant"></div>
+                <div class="setting-row"><div><strong>Auto Refresh</strong><br><small>How often sensor data is requested</small></div>
+                    <select id="refreshSelect"><option value="5000">5 seconds</option><option value="10000" selected>10 seconds</option><option value="30000">30 seconds</option><option value="60000">1 minute</option></select>
+                </div>
+                <div class="setting-row"><div><strong>Backend</strong><br><small>FastAPI server</small></div><span class="status">http://localhost:8000</span></div>
+                <button class="action-btn" onclick="saveSettings()">Save Settings</button>
+                <span id="settingsMessage"></span>
+            </div>
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+    /*
+        Backend URL
+
+        Later your FastAPI backend will run at:
+
+        http://localhost:8000
+    */
+
+    const API_URL = "http://localhost:8000";
+
+
+    // ================= SENSOR CHART =================
+
+    const ctx = document
+        .getElementById("sensorChart")
+        .getContext("2d");
+
+
+    const sensorChart = new Chart(ctx, {
+
+        type: "line",
+
+        data: {
+
+            labels: [
+                "10:00",
+                "10:10",
+                "10:20",
+                "10:30",
+                "10:40",
+                "10:50"
+            ],
+
+            datasets: [
+
+                {
+                    label: "Soil Moisture (%)",
+
+                    data: [
+                        68,
+                        65,
+                        64,
+                        62,
+                        63,
+                        61
+                    ],
+
+                    borderWidth: 2,
+
+                    tension: 0.4
+                },
+
+                {
+                    label: "Humidity (%)",
+
+                    data: [
+                        65,
+                        69,
+                        67,
+                        68,
+                        70,
+                        68
+                    ],
+
+                    borderWidth: 2,
+
+                    tension: 0.4
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: {
+                    display: true
+                }
+
+            },
+
+            scales: {
+
+                y: {
+                    beginAtZero: false,
+                    min: 0,
+                    max: 100
+                }
+
+            }
+
+        }
+
+    });
+
+
+    // ================= PLANT CONDITION CHART =================
+
+    const plantCtx = document
+        .getElementById("plantChart")
+        .getContext("2d");
+
+
+    const plantChart = new Chart(plantCtx, {
+
+        type: "doughnut",
+
+        data: {
+
+            labels: [
+                "Healthy",
+                "Needs Attention"
+            ],
+
+            datasets: [
+
+                {
+                    data: [
+                        85,
+                        15
+                    ],
+
+                    borderWidth: 0
+                }
+
+            ]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            cutout: "70%",
+
+            plugins: {
+
+                legend: {
+                    position: "bottom"
+                }
+
+            }
+
+        }
+
+    });
+
+
+    // ================= GET SENSOR DATA =================
+
+    async function getSensorData() {
+
+        try {
+
+            const response =
+                await fetch(`${API_URL}/api/latest`);
+
+            if (!response.ok) {
+                throw new Error("Backend not available");
+            }
+
+            const data =
+                await response.json();
+
+
+            // Update values
+
+            document.getElementById("moisture")
+                .innerText =
+                `${data.soil_moisture}%`;
+
+
+            document.getElementById("temperature")
+                .innerText =
+                `${data.temperature}°C`;
+
+
+            document.getElementById("humidity")
+                .innerText =
+                `${data.humidity}%`;
+
+
+            document.getElementById("plantStatus")
+                .innerText =
+                data.status || "Healthy";
+
+            document.getElementById("mMoisture").innerText = `${data.soil_moisture}%`;
+            document.getElementById("mTemp").innerText = `${data.temperature}°C`;
+            document.getElementById("mHumidity").innerText = `${data.humidity}%`;
+            document.getElementById("mStatus").innerText = `Plant Status: ${data.status || "Healthy"}`;
+
+            addHistory(data);
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Backend not connected. Showing demo data."
+            );
+
+        }
+
+    }
+
+
+    // ================= GET AI RECOMMENDATION =================
+
+    async function getRecommendation() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/api/recommendation`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+                            soil_moisture:
+                                parseFloat(
+                                    document
+                                    .getElementById("moisture")
+                                    .innerText
+                                ),
+
+                            temperature:
+                                parseFloat(
+                                    document
+                                    .getElementById("temperature")
+                                    .innerText
+                                ),
+
+                            humidity:
+                                parseFloat(
+                                    document
+                                    .getElementById("humidity")
+                                    .innerText
+                                )
+
+                        })
+
+                    }
+                );
+
+
+            if (!response.ok) {
+                throw new Error(
+                    "Recommendation API error"
+                );
+            }
+
+
+            const data =
+                await response.json();
+
+
+            document
+                .getElementById("recommendation")
+                .innerText =
+                data.recommendation ||
+                "Keep monitoring your plant.";
+
+            const recPage = document.getElementById("recommendationPageText");
+            if (recPage) recPage.innerText = data.recommendation || "Keep monitoring your plant.";
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "AI recommendation unavailable."
+            );
+
+        }
+
+    }
+
+
+
+    // ================= PAGE NAVIGATION =================
+    const navLinks = document.querySelectorAll(".nav-link");
+    const pages = {
+        dashboard: "dashboardPage",
+        monitoring: "monitoringPage",
+        history: "historyPage",
+        recommendations: "recommendationsPage",
+        settings: "settingsPage"
+    };
+
+    navLinks.forEach(link => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            Object.values(pages).forEach(id => document.getElementById(id).classList.add("hidden"));
+            document.getElementById(pages[link.dataset.page]).classList.remove("hidden");
+            navLinks.forEach(x => x.classList.remove("active"));
+            link.classList.add("active");
+
+            if (link.dataset.page === "monitoring") getSensorData();
+            if (link.dataset.page === "history") renderHistory();
+            if (link.dataset.page === "recommendations") getRecommendation();
+        });
+    });
+
+    // ================= HISTORY =================
+    const historyData = [];
+
+    function addHistory(data) {
+        historyData.unshift({
+            time: new Date().toLocaleTimeString(),
+            moisture: data.soil_moisture,
+            temperature: data.temperature,
+            humidity: data.humidity,
+            status: data.status || "Healthy"
+        });
+        if (historyData.length > 20) historyData.pop();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const table = document.getElementById("historyTable");
+        const count = document.getElementById("historyCount");
+        if (!table) return;
+
+        count.innerText = `${historyData.length} reading${historyData.length === 1 ? "" : "s"}`;
+        if (!historyData.length) {
+            table.innerHTML = '<tr><td colspan="5">No readings yet.</td></tr>';
+            return;
+        }
+
+        table.innerHTML = historyData.map(r => `
+            <tr>
+                <td>${r.time}</td><td>${r.moisture}%</td><td>${r.temperature}°C</td>
+                <td>${r.humidity}%</td><td>${r.status}</td>
+            </tr>`).join("");
+    }
+
+    // ================= SETTINGS =================
+    let refreshTimer;
+
+    function startRefreshTimer() {
+        clearInterval(refreshTimer);
+        const ms = Number(localStorage.getItem("greenmindRefresh") || 10000);
+        refreshTimer = setInterval(updateDashboard, ms);
+    }
+
+    function saveSettings() {
+        const name = document.getElementById("plantNameInput").value.trim() || "Green Plant";
+        const ms = document.getElementById("refreshSelect").value;
+        localStorage.setItem("greenmindPlantName", name);
+        localStorage.setItem("greenmindRefresh", ms);
+        const label = document.querySelector(".plant-name");
+        if (label) label.innerText = name;
+        document.getElementById("settingsMessage").innerText = " Saved ✓";
+        startRefreshTimer();
+    }
+
+    function loadSettings() {
+        const name = localStorage.getItem("greenmindPlantName");
+        const ms = localStorage.getItem("greenmindRefresh");
+        if (name) {
+            document.getElementById("plantNameInput").value = name;
+            const label = document.querySelector(".plant-name");
+            if (label) label.innerText = name;
+        }
+        if (ms) document.getElementById("refreshSelect").value = ms;
+    }
+
+
+    // ================= REFRESH DATA =================
+
+    async function updateDashboard() {
+
+        await getSensorData();
+
+        await getRecommendation();
+
+    }
+
+
+    /*
+        Update dashboard every 10 seconds
+    */
+
+    loadSettings();
+    updateDashboard();
+    startRefreshTimer();
+
+</script>
+
+</body>
+</html>
